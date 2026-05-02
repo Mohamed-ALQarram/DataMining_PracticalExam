@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE and OS specific files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Generated data (The original raw dataset is kept, but we ignore the auto-generated cleaned files)
+data/*_Cleaned.csv
+*_Cleaned.csv
