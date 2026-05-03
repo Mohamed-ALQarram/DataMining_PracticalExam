@@ -1,12 +1,13 @@
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score
 import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.tree import plot_tree
 
 def run_random_forest(X, y, dataset_name="Dataset"):
     """
-    Trains and evaluates a Random Forest model on the given features and target,
-    using GridSearchCV to optimize hyperparameters with a focus on Recall.
+    Trains and evaluates a simple Random Forest model on the given features and target.
     """
     print(f"\n{'='*40}")
     print(f"  Random Forest Results: {dataset_name}")
@@ -15,56 +16,48 @@ def run_random_forest(X, y, dataset_name="Dataset"):
     # 1. Split data into training and testing sets (80% train, 20% test)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    # 2. Initialize Base Random Forest Classifier
-    # Added class_weight='balanced' to handle class imbalance (prioritizing the minority class)
-    rf_base = RandomForestClassifier(random_state=42, class_weight='balanced')
+    # 2. Initialize Random Forest Classifier
+    # Why n_estimators=100?
+    # 100 trees is the default in Scikit-Learn. It is generally a large enough "forest" to 
+    # ensure robust, stable predictions (by averaging out the errors of individual trees) 
+    # without taking too much computational time.
+    rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
     
-    # 3. Setup Hyperparameter Grid
-    param_grid = {
-        'n_estimators': [100, 200, 300],
-        'max_depth': [None, 10, 20],
-        'min_samples_split': [2, 5, 10]
-    }
+    print("Training Random Forest model...")
+    # 3. Train the model
+    rf_model.fit(X_train, y_train)
     
-    # 4. Initialize GridSearchCV
-    # We optimize for 'recall' to minimize False Negatives
-    grid_search = GridSearchCV(
-        estimator=rf_base, 
-        param_grid=param_grid, 
-        cv=5, 
-        n_jobs=-1, 
-        scoring='recall'
-    )
+    # 4. Make predictions
+    y_pred = rf_model.predict(X_test)
     
-    print("Starting GridSearchCV to find the best hyperparameters...")
-    # 5. Train the model using Grid Search
-    grid_search.fit(X_train, y_train)
-    
-    # 6. Extract the best model and print best parameters
-    best_rf_model = grid_search.best_estimator_
-    
-    print("\nBest Parameters found:")
-    print(grid_search.best_params_)
-    
-    # 7. Make predictions with the best model
-    y_pred = best_rf_model.predict(X_test)
-    
-    # 8. Evaluate the best model
+    # 5. Evaluate the model
     accuracy = accuracy_score(y_test, y_pred)
     print(f"\nAccuracy: {accuracy * 100:.2f}%\n")
-    print("Classification Report:")
-    print(classification_report(y_test, y_pred))
     
-    # 9. Feature Importances
-    # We use the feature importances from the best_estimator_
+    # 6. Feature Importances
     if isinstance(X, pd.DataFrame):
         importances = pd.DataFrame({
             'Feature': X.columns,
-            'Importance': best_rf_model.feature_importances_
+            'Importance': rf_model.feature_importances_
         }).sort_values(by='Importance', ascending=False)
         
         print("Top 5 Most Important Features:")
         print(importances.head(5).to_string(index=False))
         
+    # 7. Plot one of the trees from the Random Forest
+    plt.figure(figsize=(20, 10))
+    feature_names = X.columns.tolist() if isinstance(X, pd.DataFrame) else None
+    class_names = [str(c) for c in rf_model.classes_]
+    
+    # Why max_depth=3 in the plot?
+    # Similar to Decision Tree, this only limits the visual depth in the saved image
+    # to keep the image readable. The actual tree in the forest might be much deeper.
+    # We plot the first tree (estimator) in the forest
+    plot_tree(rf_model.estimators_[0], feature_names=feature_names, class_names=class_names, filled=True, rounded=True, max_depth=3)
+    plt.title(f"Random Forest (Tree 0) for {dataset_name}")
+    plt.savefig(f"Random_Forest_{dataset_name}.png", bbox_inches='tight')
+    plt.close()
+    print(f"-> Saved Random Forest tree plot to Random_Forest_{dataset_name}.png")
+
     print("-" * 40)
-    return best_rf_model
+    return rf_model

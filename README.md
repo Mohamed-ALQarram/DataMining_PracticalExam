@@ -22,20 +22,26 @@ This project implements a complete machine learning pipeline to predict diabetes
 
 ## 2. Machine Learning Algorithms
 
-### A. Random Forest Classifier (`Random_Forest.py`)
-- **How:** We implemented a Random Forest model using `GridSearchCV` to test 27 different combinations of hyperparameters (`n_estimators`, `max_depth`, `min_samples_split`). 
-- **Improvement Note:** Initially, the model achieved an accuracy of around 70%. However, we noticed an issue with "Class Imbalance" (there are far more non-diabetic records than diabetic ones). 
-- **The Fix:** We improved the model by adding `class_weight='balanced'` and explicitly instructing `GridSearchCV` to optimize for **Recall** (`scoring='recall'`). 
-- **Why:** In medical diagnoses, minimizing "False Negatives" (telling a sick patient they are healthy) is the highest priority. By focusing on Recall, the model became highly sensitive to detecting the minority class, jumping to a Recall score of 75% and an overall accuracy of 73.38%. The preserved feature names also allowed us to extract that `Glucose`, `BMI`, and `Age` were the most critical factors.
+### A. K-Nearest Neighbors (KNN) (`KNN_Model.py`)
+- **How:** We built a KNN model using a targeted subset of the top features: `['Glucose', 'BMI', 'Age', 'Insulin']`.
+- **Why n_neighbors=15:** 15 was chosen to balance between bias and variance. A very small number (like 1 or 3) makes the model highly sensitive to noise (overfitting), while a very large number smooths out predictions too much (underfitting). Furthermore, 15 is an odd number, which is a best practice to avoid voting ties between our 2 classes.
 
-### B. K-Nearest Neighbors (KNN) (`KNN_Model.py`)
-- **How:** We built a KNN model using a targeted subset of the top features: `['Glucose', 'BMI', 'Age', 'Insulin']`. We used `GridSearchCV` to find the best number of neighbors and the best distance metric (it chose `metric='manhattan'` and `n_neighbors=15`).
-- **Why:** By restricting the KNN model to only the most powerful, noise-free features, the algorithm could measure distances much more accurately. This specific enhancement allowed the KNN model to achieve a very impressive **79.22% Accuracy**.
+### B. KMeans Clustering (`KMeans_Model.py`)
+- **How:** We implemented KMeans and passed the cleaned data to the model *without* the answers (Unsupervised).
+- **Why n_clusters=2:** Because we are predicting Diabetes, which is a binary outcome (Diabetic vs Non-Diabetic). We expect the data to naturally group into 2 main clusters.
+- **Why max_iter=300:** 300 is the default in Scikit-Learn. It gives the algorithm enough iterations for the cluster centers to stabilize and stop moving without running infinitely.
+- **Evaluation:** We mapped the generated clusters to the actual true labels, revealing an impressive **~74% Accuracy**. This proved that our initial data cleaning and scaling steps successfully created a dataset where the classes are naturally separable.
+- **Visualization:** We added a scatter plot using `Glucose` and `BMI`. The plot is automatically saved as `kmeans_clusters.png`.
 
-### C. KMeans Clustering (`KMeans_Model.py`)
-- **How:** We implemented KMeans with `k=2` (representing the two classes: Diabetic and Non-Diabetic). We passed the cleaned data to the model *without* the answers (Unsupervised).
-- **Why:** The goal was to see if the data naturally grouped itself into two distinct clusters based purely on the mathematical similarities of the features. 
-- **Evaluation:** We used the `Silhouette Score` to measure cluster separation. To understand its real-world performance, we then mapped the generated clusters to the actual true labels, revealing an impressive **71.35% Accuracy**. This proved that our initial data cleaning and scaling steps successfully created a dataset where the classes are naturally separable.
+### C. Decision Tree Classifier (`Decision_Tree.py`)
+- **How:** We implemented a primitive Decision Tree model on the processed dataset.
+- **Why no max_depth during training:** We did not specify a `max_depth` to keep the model simple and primitive, allowing the tree to fully grow until all leaves are pure. 
+- **Why max_depth=4 in the plot:** While visualizing the tree using `plot_tree`, we limited the visual depth to 4. This is purely for the output image (`Decision_Tree_diabetes1_Cleaned.png`), so it remains readable and does not become gigantically wide.
+
+### D. Random Forest Classifier (`Random_Forest.py`)
+- **How:** We implemented a primitive Random Forest model to identify the most important features. 
+- **Why n_estimators=100:** 100 trees is the default in Scikit-Learn. It is generally a large enough "forest" to ensure robust, stable predictions (by averaging out the errors of individual trees) without consuming too much computational time.
+- **Why max_depth=3 in the plot:** Similar to the Decision Tree, we limited the visual depth of the first tree (estimator) in the forest to 3 for the saved output image (`Random_Forest_diabetes1_Cleaned.png`) to keep it readable.
 
 ## 3. The Main Pipeline (`main.py`)
 - **How:** This is the entry point of the application. It imports the cleaning function and the three algorithm functions. It executes them sequentially and saves the cleaned dataset as `diabetes1_Cleaned.csv`.
@@ -72,7 +78,7 @@ source venv/bin/activate
 ### Step 3: Install Required Libraries
 The project relies on standard data science libraries. Install them using pip:
 ```bash
-pip install pandas numpy scikit-learn
+pip install pandas numpy scikit-learn matplotlib
 ```
 
 ### Step 4: Run the Pipeline
@@ -84,3 +90,5 @@ This will automatically:
 1. Load and clean the data from the `data/` folder.
 2. Train and evaluate the Random Forest, KNN, and KMeans models from the `models/` folder.
 3. Print all accuracy metrics, classification reports, and feature importances directly to your terminal.
+4. Generate and save a scatter plot (`knn_scatter_plot.png`) for the KNN predictions.
+5. Generate and save a scatter plot (`kmeans_clusters.png`) visualizing the KMeans clustering results.

@@ -3,6 +3,7 @@ from data.Data_Cleaning import clean_diabetes1
 from models.Random_Forest import run_random_forest
 from models.KNN_Model import run_knn
 from models.KMeans_Model import run_kmeans
+from models.Decision_Tree import run_decision_tree
 
 def main():
     print("Starting data processing pipeline...")
@@ -23,15 +24,18 @@ def main():
     df1_cleaned.to_csv(output_file1, index=False)
     print(f"-> Saved cleaned data to {output_file1}")
 
-    # Run Random Forest
-    run_random_forest(X1, y1, dataset_name="diabetes1_Cleaned")
+    # Run KMeans
+    run_kmeans(X1, y1, dataset_name="diabetes1_Cleaned")
     
     # Run KNN
     run_knn(X1, y1, dataset_name="diabetes1_Cleaned")
     
-    # Run KMeans
-    run_kmeans(X1, y1, dataset_name="diabetes1_Cleaned")
+    # Run Decision Tree
+    run_decision_tree(X1, y1, dataset_name="diabetes1_Cleaned")
 
+    # Run Random Forest
+
+    run_random_forest(X1, y1, dataset_name="diabetes1_Cleaned")
     print("\nPipeline execution completed successfully!")
 
 if __name__ == "__main__":
